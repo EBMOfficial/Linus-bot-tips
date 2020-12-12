@@ -13,11 +13,6 @@ const Discord = require('discord.js')
 const {
     prefix,
     token,
-    text1,
-    text2,
-    trumpurl,
-    help,
-    america,
     shrek,
     james,
     pottysimulator2077,
@@ -25,12 +20,27 @@ const {
 
 } = require('./config.json')
 const ytdl = require('ytdl-core')
-const client = new Discord.Client();
+const client = new Discord.Client({ partials: ['MESSAGE', 'REACTION'] });
 const config = require("./config.json")
 client.login(token);
 const queue = new Map()
 const path = require("path");
 client.setMaxListeners(10000000);
+var date = new Date().toLocaleString();
+const Mongo = require('mongoose')
+const LeaderboardSequence = require('./leaderboard.js')
+const mongoose = require('mongoose')
+mongoose.connect('mongodb+srv://EBM1:4quidsmelloff@cluster0.0reiq.mongodb.net/4quiddebt?retryWrites=true&w=majority', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false
+});
+
+
+
+
+
+
 
 
 client.on('ready', () => {
@@ -51,7 +61,73 @@ client.on('ready', () => {
 
     });
   
-  
+  client.on('messageReactionAdd', async (reaction, user) => {
+    if (reaction.partial) await reaction.fetch()
+    if (reaction.message.partial) await reaction.message.fetch()
+    if (reaction.message.channel.id !== "780466909047947284") return;
+    if (user.id === client.user.id) return;
+    if (reaction.message.author.id === user.id) return reaction.users.remove(user)
+    if (reaction.emoji.name === "🔼") {
+      await LeaderboardSequence.findOneAndUpdate({ userid: reaction.message.author.id, guildID: reaction.message.guild.id }, { $inc: { points: 1 } }, { upsert: true , new: true , setDefaultsOnInsert: true })
+      
+    } else if (reaction.emoji.name === "🔽") {
+      await LeaderboardSequence.findOneAndUpdate({ userid: reaction.message.author.id, guildID: reaction.message.guild.id }, { $inc: { points: -1 } }, { upsert: true , new: true , setDefaultsOnInsert: true})
+
+    }
+
+
+  });
+  client.on('messageReactionRemove', async (reaction, user) => {
+    if (reaction.partial) await reaction.fetch()
+    if (reaction.message.partial) await reaction.message.fetch()
+    if (reaction.message.channel.id !== "780466909047947284") return;
+    if (reaction.message.author.id === user.id) return reaction.users.remove(user)
+    if (user.id === client.user.id) return;
+    if (reaction.emoji.name === "🔼") {
+      await LeaderboardSequence.findOneAndUpdate({ userid: reaction.message.author.id, guildID: reaction.message.guild.id }, { $inc: { points: -1 } }, { upsert: true , new: true , setDefaultsOnInsert: true })
+      } else if (reaction.emoji.name === "🔽") {
+      await LeaderboardSequence.findOneAndUpdate({ userid: reaction.message.author.id, guildID: reaction.message.guild.id }, { $inc: { points: 1 } }, { upsert: true , new: true , setDefaultsOnInsert: true})
+
+    }
+
+
+  });
+  client.on('message', async Redditmessage => {
+    if (Redditmessage.channel.id === "780466909047947284") {
+      if (Redditmessage.author.bot) return;
+      await Redditmessage.react("🔼") 
+      await Redditmessage.react("🔽")
+    }
+
+
+  });
+
+  client.on('message', async message => {
+    if (message.content === `${prefix}leaderboard`) {
+      const Users = await LeaderboardSequence.find({guildID: message.guild.id}).sort({ points: -1 })
+     
+      const embedArray = []
+      for (var i = 0; i < Users.length % 10 + 1; i++) {
+      const leaderboard = new Discord.MessageEmbed()
+      .setTitle("Here is The Boomer Rat Incorporated's points leaderboard!") 
+      .setColor("RANDOM")
+      .setThumbnail("https://pbs.twimg.com/media/D7ShRPYXoAA-XXB.jpg")
+      
+      let text = ""
+      for (var j = 0; j < 10; j++) {
+    if (!Users[ i * 10 + j ]) break;
+    text += `${i * 10 + j + 1}. <@${Users[ i * 10 + j ].userid}>: ${Users[ i * 10 + j ].points}\n`
+  }
+      leaderboard.setDescription(text)
+      .setFooter("By EBMOfficial and canta, for everyone with the magic of discord.js.")
+      .setTimestamp()
+      embedArray.push(leaderboard)
+      }
+      paginate(message, embedArray)
+      
+    }
+
+  });
 
   client.on('message', async message => {
     if (message.content === `${prefix}depressedcat`) {
@@ -68,19 +144,22 @@ client.on('ready', () => {
           if (message.member.roles.cache.some(role => role.name === "The Supreme Boomers")) {
           } else if (message.member.roles.cache.some(role => role.name === "Server Moderators")) {
           } else if (message.member.roles.cache.some(role => role.name === "Rat Majesty Robin")) {
-          } else if (message.member.roles.cache.some(role => role.name === "CEO")) {
-          } else if (message.member.roles.cache.some(role => role.name === "Heir to the server")) {
-          } else if (message.member.roles.cache.some(role => role.name === "Alphas(tier 3 mods)")) {
-          } else if (message.member.roles.cache.some(role => role.name === "Big boss peeps(tier 2 mods)")) {
-          } else if (message.member.roles.cache.some(role => role.name === "lieutenant(tier 1 mods)")) {
+          } else if (message.member.roles.cache.some(role => role.name === "CEO of Racism")) {
+
           } else return message.channel.send("Your permissions are too low to execute this command!")
             message.channel.bulkDelete(100)
-                    .then(messages => console.log(`${message.author.username} has bulk deleted ${messages.size} messages`))
-                    ;
+                    .then(messages => console.log(`${message.author.username} has bulk deleted 100 messages`))
+                    
+            message.channel.send(`Successfully deleted 100 messages.`)
+            setTimeout(() => message.channel.bulkDelete(1), 10000)
+            console.log(`Successfully deleted purge confirmation message at ${date}`)
+                    
                
         }
             
     });
+
+    
     client.on('message', async message => {
         if (message.content === `${prefix}help`) {
             const HelpEmbed = new Discord.MessageEmbed()
@@ -96,13 +175,15 @@ client.on('ready', () => {
             { name: '\u200B', value: '\u200B' },
             { name: "2. Working with Auttaja", value: "During the verification process, users are required to choose from either two roles. One role will give you access to the Boomer Haven compartment of the server and the other role will give you access to the Rat Haven compartment. Please type in '-agree' for more info."},
             { name: '\u200B', value: '\u200B' },
-            { name: "3. Having access to both compartments", value: "Using the command '^AccessToBoth' will give you the 'Access to both compartments' role."},
+            { name: "3. Having Access to all compartments", value: "Using the command '^AccessToAll' will give you the 'Access to all compartments' role."},
             { name: '\u200B', value: '\u200B' },
             { name: "4. Wholesome and funny commands", value: "Using the command '^meme' will relay a meme from your beloved subreddits in the form of an embed. Using the command '^cute' will relay an image of a very cute animal through an embed. At last, using the command '^shiba' will relay an image of one of the cutest dogs ever, the Shiba Inu, through an embed."},
             { name: '\u200B', value: '\u200B' },
             { name: "5. Reminders for Disboard Bumping, and an admin-exclusive role creating command which enables the bot to create a bumping ping role, so it can ping that role every two hours.", value: "The Disboard bumping setup instructions have to be followed word by word. First, use the admin-exclusive command '^createBumpRole' so the bot can create a role to ping every two hours. Then, you can simply initiate the ping by using the command '^setReminder'. The command '!d bump' will have the bot to reset and restart the ping. At last, using the command '^stopBumpPing' will stop the bot from pinging the bumping ping role every two hours. If you want this in your server, please contact an adminstrator to follow the steps needed to create this function. If you're an administrator, what are you waiting for?"}, 
             { name: '\u200b', value: '\u200b'},
             { name: "6. Purge command", value: "This command can be used to delete 100 messages from a channel at once. Administrators Only."},
+            
+
 
             
 	        )
@@ -110,30 +191,77 @@ client.on('ready', () => {
 	        
 	        .setTimestamp()
             .setFooter('Hopefully you learned something! 😁');
-            message.channel.send(HelpEmbed).then(console.log(`${message.author.username} has successfully executed the help command.`))
+            message.channel.send(HelpEmbed).then(console.log(`${message.author.username} has successfully executed the help command at ${date}.`))
             ;
 
             
         }
     });
-    const ApprovalEmbed = new Discord.MessageEmbed()
+    
+  
+      
+   client.on('message', async message => {
+      
+      const BoomerRole = message.guild.roles.cache.find(role => role.name === "Les boomers normaux")
+      const RatRole = message.guild.roles.cache.find(role => role.name === "The normal Rat Haven dwellers")
+      const BoomerHaven = client.guilds.cache.get("597676585058828300")
+   
+      const ApprovalEmbed = new Discord.MessageEmbed()
     .setColor('RED')
     .setTitle('Hi there new user!')
     .setDescription('Please use either one of the comamnds in order to get a role.')
     .addFields(
       { name: '\u200B', value: '\u200B'},
       { name: 'Essential server roles', value: 'The command "^giveBoomerRole" gives you the "Les boomers normaux" role, and the command "^giveRatRole" gives you the "The normal Rat Haven dwellers" role.'},
-       { name: '\u200B', value: '\u200B'},
-      { name: 'Please read this.', value: 'Using the command "^giveBoomerRole" will give you access to only the Boomer Haven compartment, and the comamand "^giveRatRole" will give you access to the Rat Haven compartment. '},
       { name: '\u200B', value: '\u200B'},
-      {name: 'Read this as well.', value: 'To get access to both of these compartments, please consider using the command "^AccessToBoth" to receive the "Access to both compartments" role.'},
+      {name: 'Essential server roles', value: 'To get access to both of these compartments, please consider using the command "^AccessToAll" to receive the "Access to all compartments" role.'},
       { name: '\u200b', value: '\u200b'},
       { name: "Have some patience. A moderator will be with you in a bit!", value: "After you have used the command '-agree', please use either one of the commands, depending on which compartment you want to enter. A moderator will approve you shortly."}
       )
       .setTimestamp()
       .setFooter('Time to pick a role!');
-
-     const BoomerEmbed = new Discord.MessageEmbed()
+      const ApprovalForYapEmbed = new Discord.MessageEmbed()
+    .setColor('RED')
+    .setTitle('Hi there new user!')
+    .setDescription('Please use either one of the comamnds in order to get a role.')
+    .addFields(
+      { name: '\u200B', value: '\u200B'},
+      { name: 'Essential server roles', value: 'The command "^giveYapRole" gives you the "The Ironic Racists" role.'},
+      { name: '\u200B', value: '\u200B'},
+      { name: "Have some patience. A moderator will be with you in a bit!", value: "After you have used the command '-agree', please use the command to have access to the server immediately after approval by a moderator."}
+      )
+      .setTimestamp()
+      .setFooter('Time to pick a role!');
+      
+      const AgreeErrorEmbed = new Discord.MessageEmbed()
+      .setColor('RED')
+      .setTitle(`Hello there ${message.author.username}!`)
+      .setThumbnail('https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg')
+      .setDescription("It seems that you have already been verified!")
+      const YapRoleEmbed = new Discord.MessageEmbed()
+       .setColor("RED")
+       .setTitle(`Hi ${message.author.username}`)
+       .setDescription("It seems that you already have the 'The Ironic Racists' role!")
+       .setThumbnail("https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Ffacebook%2F000%2F032%2F558%2Ftemp6.jpg")
+      const YapEmbed = new Discord.MessageEmbed()
+  .setColor('GREEN')
+  .setTitle('Congratulations!')
+  .setDescription("You're all set!")
+  .setThumbnail('https://i.redd.it/db494tdiwv121.jpg')
+  .addFields(
+    {name: '\u200b', value: '\u200B'},
+    {name: 'Disclaimer:', value: "You now have access to YapYap Inc.! Please wait for a moderator to approve you, and you can then enjoy in the server!"},
+  )
+    .setTimestamp()
+    .setFooter('Enjoy pls 😃')
+      
+      
+      const BoomerRoleEmbed = new Discord.MessageEmbed()
+       .setColor("RED")
+       .setTitle(`Hi ${message.author.username}`)
+       .setDescription("It seems that you already have the Boomer Haven role!")
+       .setThumbnail("https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Ffacebook%2F000%2F032%2F558%2Ftemp6.jpg")
+        const BoomerEmbed = new Discord.MessageEmbed()
   .setColor('GREEN')
   .setTitle('Congratulations!')
   .setDescription("You're all set!")
@@ -144,8 +272,7 @@ client.on('ready', () => {
   )
     .setTimestamp()
     .setFooter('Enjoy pls 😃')
-  
-const RatEmbed = new Discord.MessageEmbed()
+    const RatEmbed = new Discord.MessageEmbed()
   .setColor('GREEN')
   .setTitle('Congratulations!')
   .setDescription("You're all set!")
@@ -156,94 +283,89 @@ const RatEmbed = new Discord.MessageEmbed()
   )
     .setTimestamp()
     .setFooter('Enjoy pls 😃')
-      
-   client.on('message', async message => {
-      const AgreeErrorEmbed = new Discord.MessageEmbed()
-      .setColor('RED')
-      .setTitle(`Hello there ${message.author.username}!`)
-      .setThumbnail('https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg')
-      .setDescription("It seems that you have already been verified!")
-    
-       if (message.content === "-agree") {
-         if (message.member.roles.cache.some(role => role.name === "Awaiting Verification")) {
-         } else return message.channel.send(AgreeErrorEmbed)
-         console.log(`${message.author.username} is currently seeking approval.`)
-         const ModChannelOne = client.channels.cache.get('597686739318079489') 
-         const AgreeAlertEmbed = new Discord.MessageEmbed()
-         .setTitle(`Alert! A new user is seeking approval!`)
-         .setDescription(`${message.author.username} is currently seeking in approval in <#742806434810691585>. Go approve them now!`)
-         .setTimestamp()
-         .setFooter("For administrators. Brought to you by EBMOfficial and the magic of discord.js.")
-         ModChannelOne.send(AgreeAlertEmbed)
-         ModChannelOne.send("<@&597678223555559434> <@&597677756846702602> <@&759369721572622387>")
-         message.channel.send(ApprovalEmbed)
-         
-         
-        } 
-       
-    
-    });
-    
-    client.on('message', async message => { 
-      const WillSwagEmoji = message.guild.emojis.cache.find(emoji => emoji.name === "willoff")
-      if (message.content.includes("<:willoff:777374076146679898")) {
-        message.react(WillSwagEmoji)
-      }
-    });
-
-  
-   client.on('message', async message => {
-     if (message.content === `${prefix}giveBoomerRole`) {
-       var BoomerRole = message.member.guild.roles.cache.find(role => role.name === "Les boomers normaux")
-       const BoomerRoleEmbed = new Discord.MessageEmbed()
-       .setColor("RED")
-       .setTitle(`Hi ${message.author.username}`)
-       .setDescription("It seems that you already have the Boomer Haven role!")
-       .setThumbnail("https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Ffacebook%2F000%2F032%2F558%2Ftemp6.jpg")
-       if (message.member.roles.cache.some(role => role.name === "Les boomers normaux")) return message.channel.send(BoomerRoleEmbed).then(console.log(`${message.author.username} tried to give themselves the Boomer Haven role, but it turns out that they already have it!`))
-      
-       else message.member.roles.add(BoomerRole).then(message.channel.send(BoomerEmbed))
-       console.log(`Successfully have BoomerRole to ${message.author.username}.`)
-     } else if (message.content === `${prefix}giveRatRole`) {
-      var RatRole = message.member.guild.roles.cache.find(role => role.name === "The normal Rat Haven dwellers") 
-      const RatRoleEmbed = new Discord.MessageEmbed()
-      .setColor("RED")
-      .setTitle(`Hi ${message.author.username}`)
-      .setDescription("It seems that you already have the Rat Haven role!")
-      .setThumbnail("https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Ffacebook%2F000%2F032%2F558%2Ftemp6.jpg")
-      if (message.member.roles.cache.some(role => role.name === "The normal Rat Haven dwellers")) return message.channel.send(RatRoleEmbed).then(console.log(`${message.author.username} tried to give themselves the Rat Haven role, but it turns out that they already have it!`))
-      message.member.roles.add(RatRole)
-      message.channel.send(RatEmbed)
-      console.log(`Successfully gave RatRole to ${message.author.username}.`)
-      
-     }
-    });
-   const AccessToBothEmbed = new Discord.MessageEmbed()
+  const AccessToAllEmbed = new Discord.MessageEmbed()
    .setColor('GREEN')
   .setTitle('Great success!')
   .setDescription("Chenquieh! Please read the following.")
   .setThumbnail('https://www.indiewire.com/wp-content/uploads/2019/05/Screen-Shot-2019-05-30-at-3.50.42-PM.png?w=780')
   .addFields(
     {name: '\u200b', value: '\u200B'},
-    {name: 'I have added the "Access to both compartments" role to your profile', value: "You now have access to both compartments of the server. Great success!"},
+    {name: 'I have added the "Access to all compartments" role to your profile', value: "You now have Access to all compartments of the server. Great success!"},
   )
     .setTimestamp()
     .setFooter('Very nice!');
-   client.on('message', async message => {
-     if (message.content === `${prefix}AccessToBoth`) {
-       message.channel.bulkDelete(1)
-     var role = message.member.guild.roles.cache.find(role => role.name === "Access to both compartments");
-     message.member.roles.add(role);
-     
-      message.channel.send(AccessToBothEmbed)
 
+  const AccessToAllRoleEmbed = new Discord.MessageEmbed()
+   .setColor("RED")
+   .setTitle(`Hi ${message.author.username}!`)
+   .setDescription("It seems that you already have the Access to all compartments role!")
+   .setThumbnail("https://wompampsupport.azureedge.net/fetchimage?siteId=7575&v=2&jpgQuality=100&width=700&url=https%3A%2F%2Fi.kym-cdn.com%2Fentries%2Ficons%2Ffacebook%2F000%2F032%2F558%2Ftemp6.jpg")
+   .setTimestamp()
+   .setFooter("For everyone, by EBMOfficial and the magic of discord.js.")
+      
+       if (message.content === "-agree") {
+         if (message.member.roles.cache.some(role => role.name === "Awaiting Verification")) {
+         } else return message.channel.send(AgreeErrorEmbed)  
+         if (message.guild === (BoomerHaven)) {
+         message.channel.send(ApprovalEmbed)
+         } else if (message.guild === (YapYapInc)) {
+           message.channel.send(ApprovalForYapEmbed)
+         }
+    
+    const ModChannelOne = client.channels.cache.get("597686739318079489") 
+    const ModChannelThree = message.guild.channels.cache.find(channel => channel.name === "agree-to-the-rules");
+    
+         const AgreeAlertEmbed = new Discord.MessageEmbed()
+         .setTitle(`Alert! A new user is seeking approval!`)
+         .setDescription(`${message.author.username} is currently seeking in approval in ${ModChannelThree}. Go approve them now!`)
+         .setTimestamp()
+         .setFooter("For administrators. Brought to you by EBMOfficial and the magic of discord.js.")
+         if (message.guild === (BoomerHaven)) {
+           ModChannelOne.send(AgreeAlertEmbed)
+         }
+         if (message.guild === (BoomerHaven)) {
+         ModChannelOne.send("<@&597678223555559434> <@&597677756846702602> <@&759369721572622387>")
+         }
+    
+	
+    
+         
+         console.log(`${message.author.username} is currently seeking approval. The time as of this alert is ${date}.`)
+         
+        
+         
+         
+        } 
+        if (message.content === `${prefix}giveBoomerRole`) {
+      if (message.member.roles.cache.some(role => role.name === "Les boomers normaux")) return message.channel.send(BoomerRoleEmbed).then(console.log(`${message.author.username} tried to get the Boomer role, but it turns out that he/she already has it! This event occurred at ${date}.`))
+            else (message.member.roles.add(BoomerRole)).then(message.channel.send(BoomerEmbed))
+            console.log(`${message.author.username} has been given the Boomer role by me on ${date}.`)
+
+     } else if (message.content === `${prefix}giveRatRole`) {
+       if (message.member.roles.cache.some(role => role.name === 'Awaiting Verification')) return message.channel.send(RatRoleEmbed).then(console.log(`${message.author.username} tried to get the Rat role, but it turns out that he/she already has it! Timestamp - ${date}.`))
+       else message.member.roles.add(RatRole).then(message.channel.send(RatEmbed))
+       console.log(`${message.author.username} has been given the Rat role by me. The time as of this message is ${date}.`)
+
+     } else if (message.content === `${prefix}AccessToAll`) {
+     var ATArole = message.member.guild.roles.cache.find(role => role.name === "Access to all compartments");
+     if (message.member.roles.cache.some(role => role.name === "Access to all compartments")) return message.channel.send(AccessToAllRoleEmbed).then(console.log(`${message.author.username} tried to obtain the AccessToAll role, but it seems that they already have it! Timestamp - ${date}.`));
+     else message.member.roles.add(ATArole);
+     message.channel.send(AccessToAllEmbed).then(console.log(`Successfully gave ${ATArole} to ${message.author.username} on ${date}.`))
      
-     console.log(`Successfully gave ${role} to ${message.author.username}`)
-     
+      } else if (message.content === `${prefix}giveYapRole`) {
+        var YapRole = message.member.guild.roles.cache.find(role => role.name === "The Ironic Racists");
+        if (message.member.roles.cache.some(role => role.name === "The Ironic Racists")) return message.channel.send(YapRoleEmbed).then(console.log(`${message.author.username} tried to get the YapRole but it turns out that they already have it! Timestamp - ${date}.`))
+        else message.member.roles.add(YapRole)
+        message.channel.send(YapEmbed).then(console.log(`Successfully gave YapRole to ${message.author.username} on ${date}.`))
       }
-
-
+       
+    
     });
+   
+    
+    
+
+   
   
 
   
@@ -260,7 +382,7 @@ client.on('message', async koolMessage => {
     const FlipEmbed = new Discord.MessageEmbed()
     .setColor('RANDOM')
   .setTitle((outcomes[outcomesIndex]))
-  .setDescription("Here are the results!")
+  .setDescription(`Hey ${koolMessage.author.username}, here are the results!`)
   .setThumbnail('https://lh3.googleusercontent.com/proxy/dMWuGV2neCO0uVo2BdogYVaA8xQ-o_pEP_MMIYdpY6QcP_keD-Ovx53nh8Yh0pY-GOJGPG-6yDY7Rn7iYFd3Pe3DZpf4V8eOr095mDWrWfgcANCt2RSpyYyU')
   .addFields(
     {name: '\u200b', value: '\u200B'},
@@ -269,7 +391,7 @@ client.on('message', async koolMessage => {
     .setTimestamp()
     .setFooter('Very nice!');
     koolMessage.channel.send(FlipEmbed)
-    console.log(`${koolMessage.author.username} got ${(outcomes[outcomesIndex])}`)
+    console.log(`${koolMessage.author.username} got ${(outcomes[outcomesIndex])} on ${date}.`)
     //'koolMessage' is what we decided to call the message in the 'message' event, above. It can be called whatever you'd like
     //'channel' is the text channel in which 'koolMessage' was sent
     //The send() function sends a message with the included argument (e.g. send("hello there!")). It must be sent in a channel, in this case, the channel in which the 'koolMessage' from the user was sent
@@ -288,7 +410,7 @@ client.on('message', async message => {
     .setTimestamp()
     .setFooter('Very nice!');
     message.channel.send(VibeEmbed)
-    console.log(`${message.author.username} got ${(outcomes[outcomesIndex])}.`)
+    console.log(`${message.author.username} got ${(outcomes[outcomesIndex])} on ${date}.`)
   }
 
 
@@ -299,7 +421,7 @@ client.on('message', async message => {
   .setThumbnail('https://pbs.twimg.com/media/EKM9pjTVAAIudzZ.jpg')
   .addFields(
     {name: '\u200b', value: '\u200B'},
-    {name: 'Here is the invite link!', value: "https://discord.com/api/oauth2/authorize?client_id=611177430878519296&permissions=8&scope=bot"},
+    {name: 'Here is the invite link!', value: "https://discord.com/api/oauth2/authorize?clientuserid=611177430878519296&permissions=8&scope=bot"},
     {name: '\u200b', value: '\u200b'},
     {name: "If you want to join the bot creator's server, here it is!", value: "https://discord.gg/as3gX2A22m",}
 
@@ -310,7 +432,7 @@ client.on('message', async message => {
   client.on("message", (message) => {
      if(message.content === `${prefix}invite`) {
        message.channel.send(InviteEmbed)
-       console.log(`${message.author.username} has used the invite link command.`)
+       console.log(`${message.author.username} has used the invite link command on ${date}.`)
 
       }
 
@@ -326,12 +448,7 @@ client.on('message', async message => {
             message.react(TrollRTXEmoji);
         }
     });
-    
- 
-   
-    
 
-   
     client.on("message", async (message) => {
         if (message.content === `${prefix}verify check`) {
           const VerifyCheckEmbed = new Discord.MessageEmbed()
@@ -345,7 +462,7 @@ client.on('message', async message => {
             .setTimestamp()
           if (message.member.displayName.endsWith("✅")) {
             return message.channel.send(VerifyCheckEmbed)
-            console.log(`Turns out ${message.author.username} is already verified!`)
+            console.log(`Turns out ${message.author.username} is already verified! Timestamp - ${date}.`)
           }
             
         
@@ -353,7 +470,7 @@ client.on('message', async message => {
             .setNickname(`${message.member.displayName} ✅`)
             .catch((err) => console.log(err));
           message.react("✔");
-          console.log(`Successfully verified ${message.member.username}`);
+          console.log(`Successfully verified ${message.member} on ${date}.`);
           const VerifyEmbed = new Discord.MessageEmbed()
             .setColor('GREEN')
             .setTitle("You're all set!")
@@ -367,8 +484,242 @@ client.on('message', async message => {
           message.channel.send(VerifyEmbed)
         }
     });
+  
+
+ client.on('message', async message => {
+const BumpRoleCreationErrorEmbed = new Discord.MessageEmbed()
+            .setColor("RED")
+            .setTitle(`Hi ${message.author.username}!`)
+            .setDescription("It seems that the bumping ping role already exists in this server!")
+            .setThumbnail("https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg")
+            .setTimestamp()
+            .setFooter("For everyone, by EBMOfficial and the magic of discord.js.")
+
+    if (message.content === `${prefix}createBumpRole`) {
+     
+        if (message.member.roles.cache.some(role => role.name === "Server Moderators")) {
+        } else if (message.member.roles.cache.some(role => role.name === "The Supreme Boomers")) {
+        } else if (message.member.roles.cache.some(role => role.name === "Rat Majesty Robin")) {
+        } else if (message.member.roles.cache.some(role => role.name === "CEO of Racism")) {
+        } else return message.channel.send("Your permissions are too low!")
+    const BumpRoleCreationEmbed = new Discord.MessageEmbed()
+    .setColor("RANDOM")
+      .setTitle(`Hi there ${message.author.username}!`)
+     .setThumbnail('https://upload.wikimedia.org/wikipedia/commons/e/e4/Linus_Sebastian_Screenshot_From_Youtube_August_5_2013.png')
+    .addFields(
+    {name: '\u200b', value: '\u200B'},
+    {name: 'Do you want to create a role for bumping?', value: "Click on either the check mark or cross depending on your choice."},
+    )
     
-    client.on('message', async message => {
+     const reactionMessage = await message.channel.send(BumpRoleCreationEmbed);
+     reactionMessage.react("✅") | reactionMessage.react("❌")
+    
+    
+    const filter = (reaction, user) => {
+        return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+    }; 
+    
+    reactionMessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
+	.then(collected => {
+		const reaction = collected.first();
+    
+		if (reaction.emoji.name === '✅') { 
+            if (message.guild.roles.cache.find(role => role.name === "bumping ping")) return message.channel.send(BumpRoleCreationErrorEmbed).then(console.log(`${message.author.username} tried to create a bumping ping role, but it turns out that the role already exists in the guild! Timestamp - ${date}.`))
+            else (message.guild.roles.create)({
+                data: {
+                  name: 'bumping ping',
+                  color: 'BLUE',
+                },
+                reason: 'We needed a role for people who regularly bump the server.',
+              })
+              message.channel.send(`Hey ${message.author.username}, thank you for creating the bumping ping role. You can now assign it to people who regularly bump the server!`)
+              console.log(`${message.author.username} has successfully created the bumping ping role on ${date}.`)
+    
+     
+        } else if (reaction.emoji.name === '❌') {
+          const BumpRoleCreationExitEmbed = new Discord.MessageEmbed()
+          .setColor("GREEN")
+          .setTitle(`Hi ${message.author.username}!`)
+          .setDescription("Thank you for your response. You have exited this program.")
+          .setThumbnail("")
+          .setTimestamp()
+          .setFooter("For administrators, by EBMOfficial and the magic of discord.js.")
+			message.channel.send(BumpRoleCreationExitEmbed)
+      console.log(`${message.author.username} has exited the createBumpRole program. on ${date}.`)
+		}
+    
+	})
+    }
+});
+
+
+client.on('message', async message => {
+  const BumpRoleErrorEmbed = new Discord.MessageEmbed()
+    .setColor('RED')
+      .setTitle(`Hello there ${message.author.username}!`)
+      .setThumbnail('https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg')
+      .setDescription("It seems that you already have the bumping ping role!")
+  const BumpRoleEmbed = new Discord.MessageEmbed()
+   .setTitle(`Success!`)
+     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
+    .addFields(
+    {name: '\u200b', value: '\u200B'},
+    {name: `Hi ${message.author.username}`, value: "I have successfully given you the 'bumping ping' role. You will now be notified every two hours to bump the server!"}
+    )
+ if (message.content === `${prefix}giveBumpRole`) {
+   const BumpRole = message.guild.roles.cache.find(role => role.name === "bumping ping")
+   if (message.member.roles.cache.some(role => role.name === "bumping ping")) {
+    message.channel.send(BumpRoleErrorEmbed).then(console.log(`${message.author.username} already has the bumping ping role!`))
+   } else message.member.roles.add(BumpRole).then(message.channel.send(BumpRoleEmbed)).then(console.log(`${message.author.username} has been given the bumping ping role by me on ${date}.`))
+     
+    
+ }
+
+
+});
+
+const Bumped = require('./bump.js');
+
+ client.on('message', async message => { 
+   
+    
+  const BumpRole = message.guild.roles.cache.find(role => role.name === "bumping ping")
+  
+  
+   
+    if (message.content === (`${prefix}setReminder`)) {
+      const bumpData = await Bumped.findById(message.guild.id)
+      if (!bumpData) await Bumped.findByIdAndUpdate(message.guild.id, { $set: { LastBumped: Date.now() } }, { upsert: true })
+      else if (Date.now() - bumpData.LastBumped < 7200000) return;
+      await Bumped.findByIdAndUpdate(message.guild.id, { $set: { LastBumped: Date.now() } }, { upsert: true })
+      if (message.channel.id === "597686606295465998") {
+      setTimeout(() => {
+      message.channel.send(`${BumpRole} chop-chop! It's time to bump! 😃`)
+      console.log(`Succesfully reminded members with bumping ping role to bump. The time at this event was ${date}.`)
+      }, 7200000);
+      message.channel.bulkDelete(1)
+      const ReminderConfirmationEmbed = new Discord.MessageEmbed()
+      .setColor("GREEN")
+      .setTitle(`Interval has been set!`)
+     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
+    .addFields(
+    {name: '\u200b', value: '\u200B'},
+    {name: `Hi ${message.author.username}`, value: "Please check back every two hours to bump the server."}
+    )
+        message.channel.send(ReminderConfirmationEmbed).then(console.log(`${message.author.username} has set the 2 hour Disboard bump reminder on ${date}.`))
+    }
+  }
+ })
+ client.on('message', async message => {
+  if (message.channel.id === "597686606295465998") {
+   const BumpRole = message.guild.roles.cache.find(role => role.name === "bumping ping")
+   if (message.content === `!d bump`) {
+     const bumpData = await Bumped.findById(message.guild.id)
+     if (!bumpData) await Bumped.findByIdAndUpdate(message.guild.id, { $set: { LastBumped: Date.now() } }, { upsert: true })
+     else if (Date.now() - bumpData.LastBumped < 7200000) return;
+     await Bumped.findByIdAndUpdate(message.guild.id, { $set: { LastBumped: Date.now() } }, { upsert: true })
+      const BumpConfirmationEmbed = new Discord.MessageEmbed()
+      .setTitle(`Bump confirmed!`)
+     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
+    .addFields(
+    {name: '\u200b', value: '\u200B'},
+    {name: `Hi ${message.author.username}`, value: "Thank you for bumping the server! I will remind you in two hours' time to bump it again."}
+    )
+    setTimeout(() => message.channel.send(`${BumpRole} chop-chop! It's time to bump! 😃`), 7200000);
+      message.channel.send(BumpConfirmationEmbed).then(console.log(`${message.author.username} has bumped the server on ${date}. The timer will now reinitiate.`))
+    }
+  }
+ 
+
+ });
+  
+ 
+
+
+    
+    
+
+
+
+
+client.on('voiceStateUpdate', (oldState, newState) => { 
+  const testChannelOne = newState.guild.channels.cache.find(c => c.name === 'General');
+  const OtherVCOne = client.guilds.cache.get("771131272167686185")
+  if (newState.guild.id === (OtherVCOne)) return;
+  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
+    if (!newState.channel || !newState.member) newState.member.roles.remove(VCRole).then(console.log(`${newState.member.displayName}  has exited voice channel ${testChannelOne.name} on ${date}.`)) // Triggered if the user left a channel
+    if (newState.channelID === testChannelOne.id) { // Triggered when the user joined the channel we tested for
+        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
+        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member.displayName} has received the VC role on ${date} by joining ${testChannelOne.name}.`)) // Add the role to the user if they don't already have it
+        
+    }
+  
+});
+client.on('voiceStateUpdate', (oldState, newState) => {
+  const testChannelTwo = newState.guild.channels.cache.find(c => c.name === 'music');
+  const OtherVCTwo = client.guilds.cache.get("771131272167686185") 
+  if (newState.guild.id === (OtherVCTwo)) return;
+  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
+  if (!newState.channel || !newState.member) newState.member.roles.remove(VCRole).then(console.log(`${newState.member.displayName}  has exited voice channel ${testChannelTwo.name} on ${date}.`)) // Triggered if the user left a channel
+  if (newState.channelID === testChannelTwo.id) { // Triggered when the user joined the channel we tested for
+        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
+        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member.displayName}  has received the VC role on ${date} by joining ${testChannelTwo.name}.`)) // Add the role to the user if they don't already have it
+        
+    }
+  
+});
+client.on('voiceStateUpdate', (oldState, newState) => {
+  const testChannel = newState.guild.channels.cache.find(c => c.name === 'loner is chilling');
+  const OtherVCThree = client.guilds.cache.get("771131272167686185") 
+  if (newState.guild.id === (OtherVCThree)) return;
+  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
+    if (newState.channelID === testChannel.id) { // Triggered when the user joined the channel we tested for
+        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
+        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member.displayName}  has received the VC role on ${date} by joining ${testChannel.name}.`)) // Add the role to the user if they don't already have it
+        
+    }
+  
+});
+  client.on('message', async message => {
+    if (message.content === `${prefix}haram`) {
+      const attachment = new Discord.MessageAttachment(pottysimulator2077)
+      message.channel.send(attachment).then(console.log(`${message.author.username} has been blessed on ${date}.`))
+    }
+
+
+  });
+
+  
+
+client.on('message', async message => {
+  if (message.channel.id === "781555189941141564") {
+    message.react('🔼')
+          .then(() => { 
+              message.react('🔽')
+          });
+  } 
+
+  
+});
+  
+  
+  
+  client.on('message', async message => {
+    if (message.content === `${prefix}whathappenedtoEric?`) {
+      const api = require("imageapi.js");
+          const embed = new Discord.MessageEmbed()
+          let subreddits = ["CarCrash",];
+          let subreddit = subreddits[Math.floor(Math.random() * subreddits.length)];
+          let img = await api(subreddit, true);
+          const Embed = new Discord.MessageEmbed()
+            .setTitle(`This happened to my buddy Eric.`)
+            .setURL(`https://reddit.com/r/${subreddit}`)
+            .setColor("RANDOM")
+            .setImage(img);
+          message.channel.send(Embed);
+    }
+  });
+  client.on('message', async message => {
         if (message.content === `${prefix}meme`) {
             const api = require("imageapi.js");
           const embed = new Discord.MessageEmbed()
@@ -436,11 +787,7 @@ client.on('message', async message => {
        
         }
 
-       
-   
-   
-   
-    });
+     });
 
     client.on('message', async message => {
         if (message.content === `${prefix}kidney failure`) {
@@ -459,228 +806,12 @@ client.on('message', async message => {
                                               
        
         }
-      })
+    })
        
    
    
    
     });
-
- client.on('message', async message => {
-const BumpRoleCreationErrorEmbed = new Discord.MessageEmbed()
-            .setColor("RED")
-            .setTitle(`Hi ${message.author.username}!`)
-            .setDescription("It seems that the bumping already exists in this server!")
-            .setThumbnail("https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg")
-            .setTimestamp()
-            .setFooter("For everyone, by EBMOfficial and the magic of discord.js.")
-
-    if (message.content === `${prefix}createBumpRole`) {
-     
-        if (message.member.roles.cache.some(role => role.name === "Server Moderators")) {
-        } else if (message.member.roles.cache.some(role => role.name === "The Supreme Boomers")) {
-        } else if (message.member.roles.cache.some(role => role.name === "Rat Majesty Robin")) {
-        } else if (message.member.roles.cache.some(role => role.name === "CEO")) {
-        } else if (message.member.roles.cache.some(role => role.name === "Heir to the server")) {
-        } else if (message.member.roles.cache.some(role => role.name === "Alphas(tier 3 mods)")) {
-        } else if (message.member.roles.cache.some(role => role.name === "Big boss peeps(tier 2 mods)")) {
-        } else if (message.member.roles.cache.some(role => role.name === "lieutenant(tier 1 mods)")) {
-        } else return message.channel.send("Your permissions are too low!")
-    const BumpRoleCreationEmbed = new Discord.MessageEmbed()
-    .setColor("RANDOM")
-      .setTitle(`Hi there ${message.author.username}!`)
-     .setThumbnail('https://upload.wikimedia.org/wikipedia/commons/e/e4/Linus_Sebastian_Screenshot_From_Youtube_August_5_2013.png')
-    .addFields(
-    {name: '\u200b', value: '\u200B'},
-    {name: 'Do you want to create a role for bumping?', value: "Click on either the check mark or cross depending on your choice."},
-    )
-    
-     const reactionMessage = await message.channel.send(BumpRoleCreationEmbed);
-     reactionMessage.react("✅") | reactionMessage.react("❌")
-    
-    
-    const filter = (reaction, user) => {
-        return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
-    }; 
-    
-    reactionMessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] })
-	.then(collected => {
-		const reaction = collected.first();
-    
-		if (reaction.emoji.name === '✅') { 
-            if (message.guild.roles.cache.find(role => role.name === "bumping ping")) return message.channel.send(BumpRoleCreationErrorEmbed).then(console.log(`${message.author.username} tried to create a bumping ping role, but it turns out that the role already exists in the guild!`))
-            else (message.guild.roles.create)({
-                data: {
-                  name: 'bumping ping',
-                  color: 'BLUE',
-                },
-                reason: 'We needed a role for people who regularly bump the server.',
-              })
-              message.channel.send(`Hey ${message.author.username}, thank you for creating the bumping ping role. You can now assign it to people who regularly bump the server!`)
-              console.log(`${message.author.username} has successfully created the bumping ping role.`)
-    
-     
-        } else if (reaction.emoji.name === '❌') {
-          const BumpRoleCreationExitEmbed = new Discord.MessageEmbed()
-          .setColor("GREEN")
-          .setTitle(`Hi ${message.author.username}!`)
-          .setDescription("Thank you for your response. You have exited this program.")
-          .setThumbnail("")
-          .setTimestamp()
-          .setFooter("For administrators, by EBMOfficial and the magic of discord.js.")
-			message.channel.send(BumpRoleCreationExitEmbed)
-      console.log(`${message.author.username} has exited the createBumpRole program.`)
-		}
-    
-	}) 
-    }
-});
-client.on('message', async message => {
-  const BumpRoleErrorEmbed = new Discord.MessageEmbed()
-    .setColor('RED')
-      .setTitle(`Hello there ${message.author.username}!`)
-      .setThumbnail('https://i.ytimg.com/vi/hAsZCTL__lo/maxresdefault.jpg')
-      .setDescription("It seems that you already have the bumping ping role!")
-  const BumpRoleEmbed = new Discord.MessageEmbed()
-   .setTitle(`Success!`)
-     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
-    .addFields(
-    {name: '\u200b', value: '\u200B'},
-    {name: `Hi ${message.author.username}`, value: "I have successfully given you the 'bumping ping' role. You will now be notified every two hours to bump the server!"}
-    )
- if (message.content === `${prefix}giveBumpRole`) {
-   const BumpRole = message.guild.roles.cache.find(role => role.name === "bumping ping")
-   if (message.member.roles.cache.some(role => role.name === "bumping ping")) {
-    message.channel.send(BumpRoleErrorEmbed).then(console.log(`${message.author.username} already has the bumping ping role!`))
-   } else message.member.roles.add(BumpRole).then(message.channel.send(BumpRoleEmbed)).then(console.log(`${message.author.username} has been given the bumping ping role by me.`))
-     
-    
- }
-
-
-});
-
-
-let intervalOne = setInterval(() => {}, 7200000);
- client.on('message', async message => {
-  
-   
-    if (message.content === (`${prefix}setReminder`)) {
-      message.channel.bulkDelete(1)
-      const ReminderConfirmationEmbed = new Discord.MessageEmbed()
-      .setColor("GREEN")
-      .setTitle(`Interval has been set!`)
-     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
-    .addFields(
-    {name: '\u200b', value: '\u200B'},
-    {name: `Hi ${message.author.username}`, value: "Please check back every two hours to bump the server."}
-    )
-        message.channel.send(ReminderConfirmationEmbed)
-        console.log(`${message.author.username} has set the 2 hour Disboard bump reminder.`)
-        var role = message.guild.roles.cache.find(role => role.name === "bumping ping")
-        intervalOne = setInterval(() => {
-            message.channel.send(`${role} chop-chop! It's time to bump! 😃`)
-            console.log("Succesfully reminded members with bumping ping role to bump.")
-        }, 7200000);
-    }
-    
-});
-
-
-client.on('message', async message => {
-    if(message.content === '!d bump') {
-    
-      const pingRole = message.guild.roles.cache.find(role => role.name === 'bumping ping');
-      const BumpConfirmationEmbed = new Discord.MessageEmbed()
-      .setTitle(`Bump confirmed!`)
-     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
-    .addFields(
-    {name: '\u200b', value: '\u200B'},
-    {name: `Hi ${message.author.username}`, value: "Thank you for bumping the server! I will remind you in two hours' time to bump it again."}
-    )
-      message.channel.send(BumpConfirmationEmbed)
-      console.log(`${message.author.username} has bumped the server. The timer will now reinitiate.`)
-      setTimeout(() => message.channel.send(`${pingRole} chop-chop! It's time to bump! 😃`), 7200000);
-    }
-    
-});
-
-client.on('message', async message => {
- if (message.content === `${prefix}stopBumpPing`) {
-   
-   message.channel.bulkDelete(1)
-   clearInterval(intervalOne)
-   const BumpCancellationEmbed = new Discord.MessageEmbed()
-      .setColor("GREEN")
-      .setTitle("Bump reminder has been called off!")
-     .setThumbnail('https://cdn.discordapp.com/attachments/772088888561762314/777271020322160650/unknown.png')
-    .addFields(
-    {name: '\u200b', value: '\u200B'},
-    {name: `Hi ${message.author.username}`, value: "You have successfully stopped the bump reminder. Please use either '^setReminder' or '!d bump' to reinitiate the reminder."}
-    )
-   message.channel.send(BumpCancellationEmbed)
-   console.log(`${message.author.username} has stopped the 2 hour Disboard bump reminder in their server.`)
- }
-
-
-
-
-});
-
-client.on('voiceStateUpdate', (oldState, newState) => { 
-  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
-    if (!newState.channel || !newState.member) newState.member.roles.remove(VCRole).then(console.log(`${newState.member} has exited the voice channel.`)) // Triggered if the user left a channel
-    const testChannel = newState.guild.channels.cache.find(c => c.name === 'General');
-    if (newState.channelID === testChannel.id) { // Triggered when the user joined the channel we tested for
-        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
-        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member} has received the VC role.`)) // Add the role to the user if they don't already have it
-        
-    }
-});
-client.on('voiceStateUpdate', (oldState, newState) => {
-  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
-    if (!newState.channel || !newState.member) newState.member.roles.remove(VCRole).then(console.log(`${newState.member} has exited the voice channel.`)) // Triggered if the user left a channel
-    const testChannel = newState.guild.channels.cache.find(c => c.name === 'music');
-    if (newState.channelID === testChannel.id) { // Triggered when the user joined the channel we tested for
-        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
-        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member} has received the VC role.`)) // Add the role to the user if they don't already have it
-        
-    }
-});
-client.on('voiceStateUpdate', (oldState, newState) => {
-  const VCRole = newState.guild.roles.cache.find(r => r.name === "VC");
-    if (!newState.channel || !newState.member) newState.member.roles.remove(VCRole).then(console.log(`${newState.member} has exited the voice channel.`)) // Triggered if the user left a channel
-    const testChannel = newState.guild.channels.cache.find(c => c.name === 'loner is chilling');
-    if (newState.channelID === testChannel.id) { // Triggered when the user joined the channel we tested for
-        const role = newState.guild.roles.cache.find(r => r.name === 'VC');
-        if (!newState.member.roles.cache.has(role)) newState.member.roles.add(role).then(console.log(`${newState.member} has received the VC role.`)) // Add the role to the user if they don't already have it
-        
-    }
-});
-  client.on('message', async message => {
-    if (message.content === `${prefix}haram`) {
-      const attachment = new Discord.MessageAttachment(pottysimulator2077)
-      message.channel.send(attachment).then(console.log(`${message.author.username} has been blessed.`))
-    }
-
-
-  });
-
-  client.on('message', async message => {
-    if (message.content === `${prefix}whathappenedtoEric?`) {
-      const api = require("imageapi.js");
-          const embed = new Discord.MessageEmbed()
-          let subreddits = ["CarCrash",];
-          let subreddit = subreddits[Math.floor(Math.random() * subreddits.length)];
-          let img = await api(subreddit, true);
-          const Embed = new Discord.MessageEmbed()
-            .setTitle(`This happened to my buddy Eric.`)
-            .setURL(`https://reddit.com/r/${subreddit}`)
-            .setColor("RANDOM")
-            .setImage(img);
-          message.channel.send(Embed);
-    }
-  });
     
  
 
@@ -695,27 +826,47 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
 
     });
-    client.on('message', async message => {
-        if (message.author.username === "Dank Memer") {
-            const reactionEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'shrek');
-            message.react(reactionEmoji);
-        }
-    });
-
-    client.on('message', async message => {
-        if (message.content.startsWith("pls")) {
-            const reactionEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'shrek');
-            message.react(reactionEmoji);
-        }
-    });
-
-    client.on('message', async message => {
-        if (message.content.startsWith("Pls")) {
-            const reactionEmoji = message.guild.emojis.cache.find(emoji => emoji.name === 'shrek');
-            message.react(reactionEmoji);
-        }
-    });
-
+    
    
-  
 });
+const reactions = ['◀️', '⏸️', '▶️']
+async function paginate(message, embeds, options) {
+    const pageMsg = await message.channel.send({ embed: embeds[0] })
+    await pageMsg.react(reactions[0])
+    await pageMsg.react(reactions[1])
+    await pageMsg.react(reactions[2])
+
+    let pageIndex = 0;
+    let time = 30000;
+    const filter = (reaction, user) => {
+        return reactions.includes(reaction.emoji.name) && user.id === message.author.id;
+    };
+    if (options) {
+        if (options.time) time = options.time
+    }
+    const collector = pageMsg.createReactionCollector(filter, { time: time });
+    collector.on('collect', (reaction, user) => {
+        reaction.users.remove(user)
+        if (reaction.emoji.name === '▶️') {
+            if (pageIndex < embeds.length-1) {
+                pageIndex++
+                pageMsg.edit({ embed: embeds[pageIndex] })
+            } else {
+                pageIndex = 0
+                pageMsg.edit({ embed: embeds[pageIndex] })
+            }
+        } else if (reaction.emoji.name === '⏸️') {
+            collector.stop()
+        } else if (reaction.emoji.name === '◀️') {
+            if (pageIndex > 0) {
+                pageIndex--
+                pageMsg.edit({ embed: embeds[pageIndex] })
+            } else {
+                pageIndex = embeds.length-1
+                pageMsg.edit({ embed: embeds[pageIndex]})
+            }
+        }
+    });
+
+    collector.on('end', () => pageMsg.reactions.removeAll().catch(err => console.log(err)));
+}
