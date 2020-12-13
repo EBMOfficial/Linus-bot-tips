@@ -1,3 +1,26 @@
+const Discord = require('discord.js')
+const {
+    prefix,
+    token,
+    shrek,
+    james,
+    pottysimulator2077,
+    idkcatfailure,
+
+} = require('./config.json')
+const client = new Discord.Client({ partials: ['MESSAGE', 'REACTION'] });
+const config = require("./config.json")
+client.login(token);
+client.setMaxListeners(10000000);
+var date = new Date().toLocaleString();
+const Mongo = require('mongoose')
+const LeaderboardSequence = require('./leaderboard.js')
+const mongoose = require('mongoose')
+mongoose.connect('mongodb+srv://EBM1:4quidsmelloff@cluster0.0reiq.mongodb.net/4quiddebt?retryWrites=true&w=majority', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false
+});
 const HelpEmbed = new Discord.MessageEmbed()
 	        .setColor('RANDOM')
 	        .setTitle('Did you ask for help?')
