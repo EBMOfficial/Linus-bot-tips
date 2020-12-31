@@ -27,7 +27,7 @@ var date = new Date().toLocaleString();
 const Mongo = require('mongoose')
 const LeaderboardSequence = require('./leaderboard.js')
 const mongoose = require('mongoose')
-mongoose.connect('mongodb+srv://EBM1:4quidsmelloff@cluster0.0reiq.mongodb.net/4quiddebt?retryWrites=true&w=majority', {
+mongoose.connect('hahanotforyou', {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useFindAndModify: false
