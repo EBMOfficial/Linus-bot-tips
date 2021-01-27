@@ -1,0 +1,2 @@
+// Since my bot runs on Repl.it (no money xddd) This is what I use to mess with the path for ffmpeg (or something) ok crap off jajaja
+run = "npm install && export PATH=$PWD/node_modules/ffmpeg-static:$PATH && node index.js"
