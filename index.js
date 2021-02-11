@@ -35,6 +35,7 @@ const ban = require('./ban.js')
 const kick = require('./kick.js')
 const settingWelcome = require('./settingWelcome.js')
 const settingBumps = require('./settingBumps.js')
+const memberCount = require('./memberCount.js')
 
 
 
@@ -73,7 +74,7 @@ client.on('ready', () => {
     kick(client)
     settingWelcome(client)
     settingBumps(client)
-
+    memberCount(client)
     
     
 });
